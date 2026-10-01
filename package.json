@@ -1,0 +1,57 @@
+{
+  "name": "angular-realworld",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "test": "ng test",
+    "lint": "ng lint --force",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report",
+    "prepare": "husky install"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "22.2.1",
+    "@angular/common": "22.2.1",
+    "@angular/compiler": "22.2.1",
+    "@angular/core": "22.2.1",
+    "@angular/forms": "22.2.1",
+    "@angular/platform-browser": "22.2.1",
+    "@angular/platform-browser-dynamic": "22.2.1",
+    "@angular/router": "22.2.1",
+    "marked": "^11.1.0",
+    "rxjs": "^7.4.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.1"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^22.2.0",
+    "@angular/cli": "^22.2.0",
+    "@angular/compiler-cli": "22.2.1",
+    "@playwright/test": "^1.63.0",
+    "@types/jasmine": "~4.3.0",
+    "@types/marked": "^6.0.0",
+    "@types/node": "^20.19.43",
+    "husky": "^8.0.3",
+    "istanbul-lib-instrument": "^6.0.3",
+    "jasmine-core": "~4.5.0",
+    "karma": "~6.4.1",
+    "karma-chrome-launcher": "~3.1.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.0.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "typescript": "~6.0.3"
+  },
+  "lint-staged": {
+    "*.{ts,html,css,json,md}": "prettier --write"
+  }
+}

@@ -1,0 +1,17 @@
+.nav-link {
+  cursor: pointer;
+}
+
+.tag-pill {
+  cursor: pointer;
+}
+
+.banner .container a {
+  color: #fff; /* Sets the text color to white */
+  text-decoration: underline; /* Optional: Removes the underline from links */
+}
+
+.banner .container a:hover {
+  color: #2e3b5b; /* Change to the desired hover color */
+  text-decoration: underline; /* Optional: Adds underline on hover */
+}
