@@ -36,6 +36,8 @@ test.describe("articles", () => {
     await articlePage.goto(article.slug);
     await articlePage.editButton.click();
     await expect(authedPage).toHaveURL(`/editor/${article.slug}`);
+    // The editor fills the form after loading the article; typing earlier is overwritten.
+    await expect(editorPage.title).toHaveValue(article.title);
 
     await editorPage.title.fill(newTitle);
     await editorPage.publish.click();

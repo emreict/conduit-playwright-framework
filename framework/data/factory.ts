@@ -26,6 +26,13 @@ export function buildUser(overrides: Partial<NewUser> = {}): NewUser {
   };
 }
 
+/** Inputs the API is expected to reject (used by negative scenarios). */
+export const invalidInput = {
+  malformedEmail: "not-an-email",
+  shortPassword: "abc",
+  longText: "x".repeat(300),
+} as const;
+
 export function buildArticle(overrides: Partial<NewArticle> = {}): NewArticle {
   const id = uniqueId();
   return {

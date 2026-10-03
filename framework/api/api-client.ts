@@ -47,16 +47,23 @@ export class ApiClient {
 
   // --- low level -----------------------------------------------------------
 
-  /** Sends a request and returns the raw response (status, headers, body). */
+  /**
+   * Sends a request and returns the raw response (status, headers, body).
+   * `headers` are added last, so they can override the stored token.
+   */
   async send(
     method: "GET" | "POST" | "PUT" | "DELETE",
     path: string,
     data?: unknown,
+    headers: Record<string, string> = {},
   ): Promise<APIResponse> {
     return this.ctx.fetch(`${config.apiURL}${path}`, {
       method,
       data,
-      headers: this.token ? { Authorization: `Token ${this.token}` } : {},
+      headers: {
+        ...(this.token ? { Authorization: `Token ${this.token}` } : {}),
+        ...headers,
+      },
     });
   }
 
@@ -90,6 +97,20 @@ export class ApiClient {
   async currentUser(): Promise<ApiUser> {
     return (await this.json<{ user: ApiUser }>(await this.send("GET", "/user")))
       .user;
+  }
+
+  async updateUser(
+    changes: Partial<
+      Pick<ApiUser, "email" | "username" | "bio" | "image"> & {
+        password: string;
+      }
+    >,
+  ): Promise<ApiUser> {
+    return (
+      await this.json<{ user: ApiUser }>(
+        await this.send("PUT", "/user", { user: changes }),
+      )
+    ).user;
   }
 
   // --- articles ------------------------------------------------------------

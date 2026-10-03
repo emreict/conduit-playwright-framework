@@ -28,8 +28,14 @@ interface TestFixtures {
   // data
   article: ApiArticle;
   cleanup: { article: (slug: string) => void };
+  /** A brand-new account for this test only; safe to change its credentials. */
+  freshUser: TestUser;
+  /** API client authenticated as `freshUser`. */
+  freshApi: ApiClient;
   // browser already signed in as `testUser`
   authedPage: Page;
+  /** Seeds the JWT of any user into this test's browser before navigation. */
+  signInAs: (user: TestUser) => Promise<void>;
 }
 
 interface WorkerFixtures {
@@ -105,7 +111,35 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await use(created);
   },
 
+  /**
+   * Registered through the API. The API has no delete-user endpoint, so each
+   * use leaves an account behind: request this fixture only when a test
+   * changes credentials or must not share state with `testUser`.
+   */
+  freshUser: async ({}, use) => {
+    const client = await ApiClient.create();
+    const data = buildUser();
+    const created = await client.register(data);
+    await client.dispose();
+    await use({ ...data, token: created.token });
+  },
+
+  freshApi: async ({ freshUser }, use) => {
+    const client = await ApiClient.create(freshUser.token);
+    await use(client);
+    await client.dispose();
+  },
+
   // --- authentication -------------------------------------------------------
+  signInAs: async ({ page }, use) => {
+    await use(async (user) => {
+      await page.addInitScript(
+        (token) => window.localStorage.setItem("jwtToken", token),
+        user.token,
+      );
+    });
+  },
+
   /** Skips the login form by seeding the JWT the app reads from localStorage. */
   authedPage: async ({ page, testUser }, use) => {
     await page.addInitScript(

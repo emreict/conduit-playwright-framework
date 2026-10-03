@@ -4,7 +4,7 @@ import { config } from "./framework/config/env";
 const isCI = !!process.env["CI"];
 
 export default defineConfig({
-  testDir: "./tests",
+  testDir: "./e2e",
   outputDir: "./test-results",
   fullyParallel: true,
   forbidOnly: isCI,

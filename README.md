@@ -134,17 +134,19 @@ Open http://localhost:4200/. The app reloads automatically when you change sourc
 
 ## Running the tests
 
-The project includes a [Playwright](https://playwright.dev/) framework with two projects: **`chromium`** for UI tests in `tests/ui/`, and **`api`** for API tests in `tests/api/` (no browser needed).
+The project includes a [Playwright](https://playwright.dev/) framework with two projects: **`chromium`** for UI tests in `e2e/ui/`, and **`api`** for API tests in `e2e/api/` (no browser needed).
 
-| Command                                               | What it does                           |
-| ----------------------------------------------------- | -------------------------------------- |
-| `npm run e2e`                                         | Run all tests (UI and API)             |
-| `npm run e2e:api`                                     | Run only the API tests                 |
-| `npm run e2e:ui`                                      | Open Playwright UI mode                |
-| `npm run e2e:headed`                                  | Run with a visible browser             |
-| `npm run e2e:debug`                                   | Step through tests in the inspector    |
-| `npm run e2e:report`                                  | Open the HTML report from the last run |
-| `npx playwright test tests/ui/auth.spec.ts -g "name"` | Run a single file or test              |
+| Command                                                        | What it does                                                          |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `npm run e2e`                                                  | Run all tests (UI and API)                                            |
+| `npm run e2e:api`                                              | Run only the API tests                                                |
+| `npm run e2e:users`                                            | Run the user-management specs (UI and API)                            |
+| `npm run e2e:ui`                                               | Open Playwright UI mode                                               |
+| `npm run e2e:headed`                                           | Run with a visible browser                                            |
+| `npm run e2e:debug`                                            | Step through tests in the inspector                                   |
+| `npm run e2e:report`                                           | Open the HTML report from the last run                                |
+| `npx playwright test e2e/ui/user-management.spec.ts -g "name"` | Run a single file or test                                             |
+| `npx playwright test --grep @negative`                         | Run tests by tag (`@auth`, `@registration`, `@settings`, `@negative`) |
 
 You don't need to start the app first: Playwright starts the dev server itself, or reuses one already running on port 4200. Configuration is in `playwright.config.ts`.
 
@@ -157,10 +159,12 @@ framework/
 ├── data/factory.ts      unique users and articles (uniqueId, buildUser, buildArticle)
 ├── pages/               page objects: AuthPage, HomePage, EditorPage, ArticlePage, NavBar
 └── fixtures/index.ts    the extended `test` with all fixtures below
-tests/
-├── ui/                  browser tests (smoke, auth, articles, comments)
-└── api/                 API tests (CRUD, auth, pagination, favorites, comments)
+e2e/
+├── ui/                  browser tests (smoke, user-management, articles, comments)
+└── api/                 API tests (users, articles, comments)
 ```
+
+**`e2e/ui/user-management.spec.ts`** is a deliberately flat spec: every locator and step is inline, with no page objects, so a student can read one file top to bottom. It covers registration, login, session and route protection, and settings, including negative cases. **`e2e/api/users.api.spec.ts`** covers the same rules at API level. Tests marked `known-issue` assert behaviour that is currently wrong in the app or API (for example, duplicate email on update returns `500` and the UI shows no error); they will fail on purpose once the defect is fixed.
 
 Import `test` and `expect` from the framework, not from `@playwright/test`:
 
@@ -174,20 +178,22 @@ test("deletes an article", async ({ authedPage, article, articlePage, api }) => 
 });
 ```
 
-| Fixture                                                       | What you get                                                            |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `testUser`                                                    | One account per worker (registered via the API, or from `.env`)         |
-| `authedPage`                                                  | A page already signed in as `testUser` (JWT seeded into `localStorage`) |
-| `api` / `anonApi`                                             | API client with / without the `testUser` token                          |
-| `article`                                                     | An article created through the API and deleted after the test           |
-| `cleanup`                                                     | `cleanup.article(slug)` deletes UI-created articles after the test      |
-| `authPage`, `homePage`, `editorPage`, `articlePage`, `navBar` | Page objects                                                            |
+| Fixture                                                       | What you get                                                                             |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `testUser`                                                    | One account per worker (registered via the API, or from `.env`); read-only               |
+| `freshUser` / `freshApi`                                      | A brand-new account for this test, and an API client for it; use when credentials change |
+| `signInAs(user)`                                              | Seeds a user's JWT before navigation                                                     |
+| `authedPage`                                                  | A page already signed in as `testUser` (JWT seeded into `localStorage`)                  |
+| `api` / `anonApi`                                             | API client with / without the `testUser` token                                           |
+| `article`                                                     | An article created through the API and deleted after the test                            |
+| `cleanup`                                                     | `cleanup.article(slug)` deletes UI-created articles after the test                       |
+| `authPage`, `homePage`, `editorPage`, `articlePage`, `navBar` | Page objects                                                                             |
 
 ### Configuration
 
 Defaults work out of the box. To override, copy `.env.example` to `.env` (it is git-ignored) and set `BASE_URL`, `API_URL`, or `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` to sign in with an existing account instead of registering a throwaway one.
 
-> The API has no delete-user endpoint, so each run leaves behind one registered user per worker. Articles and comments are cleaned up automatically.
+> The API has no delete-user endpoint, so each run leaves behind one registered user per worker, plus one per registration test and per `freshUser`. Articles and comments are cleaned up automatically.
 
 ## Project structure
 
@@ -202,7 +208,7 @@ src/app/
 │   └── settings/    account settings
 └── shared/          error list component, ifAuthenticated directive, markdown pipe
 framework/           Playwright framework: page objects, API client, fixtures
-tests/               Playwright specs (ui/ and api/)
+e2e/                 Playwright specs (ui/ and api/)
 ```
 
 ## Other commands
