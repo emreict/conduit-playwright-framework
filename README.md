@@ -134,16 +134,60 @@ Open http://localhost:4200/. The app reloads automatically when you change sourc
 
 ## Running the tests
 
-End-to-end tests use [Playwright](https://playwright.dev/), live in `tests/`, and run in Chromium.
+The project includes a [Playwright](https://playwright.dev/) framework with two projects: **`chromium`** for UI tests in `tests/ui/`, and **`api`** for API tests in `tests/api/` (no browser needed).
 
-| Command                                             | What it does                           |
-| --------------------------------------------------- | -------------------------------------- |
-| `npm run e2e`                                       | Run all Playwright tests               |
-| `npm run e2e:ui`                                    | Open Playwright UI mode                |
-| `npm run e2e:report`                                | Open the HTML report from the last run |
-| `npx playwright test tests/smoke.spec.ts -g "name"` | Run a single file or test              |
+| Command                                               | What it does                           |
+| ----------------------------------------------------- | -------------------------------------- |
+| `npm run e2e`                                         | Run all tests (UI and API)             |
+| `npm run e2e:api`                                     | Run only the API tests                 |
+| `npm run e2e:ui`                                      | Open Playwright UI mode                |
+| `npm run e2e:headed`                                  | Run with a visible browser             |
+| `npm run e2e:debug`                                   | Step through tests in the inspector    |
+| `npm run e2e:report`                                  | Open the HTML report from the last run |
+| `npx playwright test tests/ui/auth.spec.ts -g "name"` | Run a single file or test              |
 
 You don't need to start the app first: Playwright starts the dev server itself, or reuses one already running on port 4200. Configuration is in `playwright.config.ts`.
+
+### Framework layout
+
+```
+framework/
+├── config/env.ts        BASE_URL, API_URL and optional test account from env / .env
+├── api/api-client.ts    typed wrapper over the REST API (users, articles, comments, tags)
+├── data/factory.ts      unique users and articles (uniqueId, buildUser, buildArticle)
+├── pages/               page objects: AuthPage, HomePage, EditorPage, ArticlePage, NavBar
+└── fixtures/index.ts    the extended `test` with all fixtures below
+tests/
+├── ui/                  browser tests (smoke, auth, articles, comments)
+└── api/                 API tests (CRUD, auth, pagination, favorites, comments)
+```
+
+Import `test` and `expect` from the framework, not from `@playwright/test`:
+
+```ts
+import { test, expect } from "../../framework/fixtures";
+
+test("deletes an article", async ({ authedPage, article, articlePage, api }) => {
+  await articlePage.goto(article.slug);
+  await articlePage.deleteButton.click();
+  await expect(authedPage).toHaveURL("/");
+});
+```
+
+| Fixture                                                       | What you get                                                            |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `testUser`                                                    | One account per worker (registered via the API, or from `.env`)         |
+| `authedPage`                                                  | A page already signed in as `testUser` (JWT seeded into `localStorage`) |
+| `api` / `anonApi`                                             | API client with / without the `testUser` token                          |
+| `article`                                                     | An article created through the API and deleted after the test           |
+| `cleanup`                                                     | `cleanup.article(slug)` deletes UI-created articles after the test      |
+| `authPage`, `homePage`, `editorPage`, `articlePage`, `navBar` | Page objects                                                            |
+
+### Configuration
+
+Defaults work out of the box. To override, copy `.env.example` to `.env` (it is git-ignored) and set `BASE_URL`, `API_URL`, or `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` to sign in with an existing account instead of registering a throwaway one.
+
+> The API has no delete-user endpoint, so each run leaves behind one registered user per worker. Articles and comments are cleaned up automatically.
 
 ## Project structure
 
@@ -157,7 +201,8 @@ src/app/
 │   ├── profile/     user profiles, follow button, favorites
 │   └── settings/    account settings
 └── shared/          error list component, ifAuthenticated directive, markdown pipe
-tests/               Playwright tests
+framework/           Playwright framework: page objects, API client, fixtures
+tests/               Playwright specs (ui/ and api/)
 ```
 
 ## Other commands
